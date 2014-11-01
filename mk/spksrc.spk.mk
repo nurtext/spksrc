@@ -38,6 +38,18 @@ $(WORK_DIR)/package.tgz: strip
 	@[ -f $@ ] && rm $@ || true
 	(cd $(STAGING_DIR) && tar cpzf $@ --owner=root --group=root *)
 
+$(WORK_DIR)/PACKAGE_ICON.PNG: $(SPK_ICON)
+	convert "$(SPK_ICON)" -thumbnail 72x72 "$(WORK_DIR)/PACKAGE_ICON.PNG"
+
+$(WORK_DIR)/PACKAGE_ICON_128.PNG: $(SPK_ICON)
+	convert "$(SPK_ICON)" -thumbnail 128x128 "$(WORK_DIR)/PACKAGE_ICON_128.PNG"
+
+$(WORK_DIR)/PACKAGE_ICON_144.PNG: $(SPK_ICON)
+	convert "$(SPK_ICON)" -thumbnail 144x144 "$(WORK_DIR)/PACKAGE_ICON_144.PNG"
+
+$(WORK_DIR)/PACKAGE_ICON_256.PNG: $(SPK_ICON)
+	convert "$(SPK_ICON)" -thumbnail 256x256 "$(WORK_DIR)/PACKAGE_ICON_256.PNG"
+
 $(WORK_DIR)/INFO: Makefile $(SPK_ICON)
 	$(create_target_dir)
 	@$(MSG) "Creating INFO file for $(SPK_NAME)"
@@ -50,14 +62,17 @@ $(WORK_DIR)/INFO: Makefile $(SPK_ICON)
 	   ) \
 	) | sed 's|"\s|"\n|' >> $@
 	@echo arch=\"$(SPK_ARCH)\" >> $@
-	@echo distributor=\"SynoCommunity\" >> $@
-	@echo distributor_url=\"http://synocommunity.com\" >> $@
-ifeq ($(strip $(MAINTAINER)),SynoCommunity)
-	@echo maintainer=\"SynoCommunity\" >> $@
-	@echo maintainer_url=\"http://synocommunity.com\" >> $@
+	@echo maintainer=\"$(MAINTAINER)\" >> $@
+	@echo maintainer_url=\"$(MAINTAINER_URL)\" >> $@
+ifneq ($(strip $(DISTRIBUTOR)),)
+	@echo distributor=\"$(DISTRIBUTOR)\" >> $@
 else
-	@echo maintainer=\"SynoCommunity/$(MAINTAINER)\" >> $@
-	@echo maintainer_url=\"http://synocommunity.com/developers/$(MAINTAINER)\" >> $@
+	@echo distributor=\"$(MAINTAINER)\" >> $@
+endif
+ifneq ($(strip $(DISTRIBUTOR_URL)),)
+	@echo distributor_url=\"$(DISTRIBUTOR_URL)\" >> $@
+else
+	@echo distributor_url=\"$(MAINTAINER_URL)\" >> $@
 endif
 ifneq ($(strip $(FIRMWARE)),)
 	@echo firmware=\"$(FIRMWARE)\" >> $@
@@ -65,7 +80,7 @@ else
 	@echo firmware=\"3.1-1594\" >> $@
 endif
 ifneq ($(strip $(BETA)),)
-	@echo report_url=\"https://github.com/SynoCommunity/spksrc/issues\" >> $@
+	@echo report_url=\"$(REPORT_URL)\" >> $@
 endif
 ifneq ($(strip $(HELPURL)),)
 	@echo helpurl=\"$(HELPURL)\" >> $@
@@ -159,19 +174,6 @@ $(DSM_LICENSE_FILE): $(LICENSE_FILE)
 	@echo $@
 	@$(dsm_license_copy)
 
-# Package Icons
-$(WORK_DIR)/PACKAGE_ICON.PNG:
-	$(create_target_dir)
-	@$(MSG) "Creating PACKAGE_ICON.PNG for $(SPK_NAME)"
-	@[ -f $@ ] && rm $@ || true
-	(convert $(SPK_ICON) -thumbnail 72x72 - >> $@)
-
-$(WORK_DIR)/PACKAGE_ICON_120.PNG:
-	$(create_target_dir)
-	@$(MSG) "Creating PACKAGE_ICON_120.PNG for $(SPK_NAME)"
-	@[ -f $@ ] && rm $@ || true
-	(convert $(SPK_ICON) -thumbnail 120x120 - >> $@)
-
 # Scripts
 DSM_SCRIPTS_DIR = $(WORK_DIR)/scripts
 
@@ -227,7 +229,7 @@ $(DSM_SCRIPTS_DIR)/%: $(filter %.sc,$(FWPORTS))
 $(DSM_SCRIPTS_DIR)/%: $(filter %.sh,$(ADDITIONAL_SCRIPTS))
 	@$(dsm_script_copy)
 
-SPK_CONTENT = package.tgz INFO PACKAGE_ICON.PNG PACKAGE_ICON_120.PNG scripts
+SPK_CONTENT = package.tgz INFO scripts PACKAGE_ICON.PNG PACKAGE_ICON_128.PNG PACKAGE_ICON_144.PNG PACKAGE_ICON_256.PNG
 
 .PHONY: md5
 md5:
@@ -258,7 +260,8 @@ ifneq ($(strip $(DSM_LICENSE)),)
 SPK_CONTENT += LICENSE
 endif
 
-$(SPK_FILE_NAME): $(WORK_DIR)/package.tgz $(WORK_DIR)/INFO md5 $(WORK_DIR)/PACKAGE_ICON.PNG $(WORK_DIR)/PACKAGE_ICON_120.PNG $(DSM_SCRIPTS) wizards $(DSM_LICENSE) conf
+$(SPK_FILE_NAME): $(WORK_DIR)/package.tgz $(WORK_DIR)/INFO $(DSM_SCRIPTS) $(DSM_WIZARDS) $(WORK_DIR)/PACKAGE_ICON.PNG $(WORK_DIR)/PACKAGE_ICON_128.PNG $(WORK_DIR)/PACKAGE_ICON_144.PNG $(WORK_DIR)/PACKAGE_ICON_256.PNG
+#$(SPK_FILE_NAME): $(WORK_DIR)/package.tgz $(WORK_DIR)/INFO md5 $(WORK_DIR)/PACKAGE_ICON.PNG $(WORK_DIR)/PACKAGE_ICON_120.PNG $(DSM_SCRIPTS) wizards $(DSM_LICENSE) conf
 	$(create_target_dir)
 	(cd $(WORK_DIR) && tar cpf $@ --group=root --owner=root $(SPK_CONTENT))
 
