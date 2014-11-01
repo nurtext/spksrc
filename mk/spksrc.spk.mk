@@ -87,6 +87,11 @@ ifneq ($(strip $(STARTABLE)),)
 	@echo startable=\"$(STARTABLE)\" >> $@
 endif
 	@echo displayname=\"$(DISPLAY_NAME)\" >> $@
+	@echo $(foreach LANGUAGE, $(LANGUAGES), \
+		$(shell [ ! -z "$(DISPLAY_NAME_$(shell echo $(LANGUAGE) | tr [:lower:] [:upper:]))" ] && \
+				echo -n displayname_$(LANGUAGE)=\\\"$(DISPLAY_NAME_$(shell echo $(LANGUAGE) | tr [:lower:] [:upper:]))\\\" \
+	) \
+	) | sed 's|"\s|"\n|' >> $@
 ifneq ($(strip $(DSM_UI_DIR)),)
 	@echo dsmuidir=\"$(DSM_UI_DIR)\" >> $@
 endif
@@ -213,12 +218,12 @@ $(DSM_SCRIPTS_DIR)/preupgrade:
 $(DSM_SCRIPTS_DIR)/postupgrade:
 	@$(dsm_script_redirect)
 
-$(DSM_SCRIPTS_DIR)/start-stop-status: $(SSS_SCRIPT) 
+$(DSM_SCRIPTS_DIR)/start-stop-status: $(SSS_SCRIPT)
 	@$(dsm_script_copy)
 $(DSM_SCRIPTS_DIR)/installer: $(INSTALLER_SCRIPT)
 	@$(dsm_script_copy)
 $(DSM_SCRIPTS_DIR)/%: $(filter %.sc,$(FWPORTS))
-	@$(dsm_script_copy)	
+	@$(dsm_script_copy)
 $(DSM_SCRIPTS_DIR)/%: $(filter %.sh,$(ADDITIONAL_SCRIPTS))
 	@$(dsm_script_copy)
 
